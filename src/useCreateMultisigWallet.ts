@@ -10,7 +10,7 @@ import {
   waitTransactionToBeConfirmedOrError,
   ZEROSECURE_PROGRAM_ID,
   TransactionOptions,
-} from "./utils/";
+} from "./utils";
 
 export interface MultisigWallet {
   address?: string;
