@@ -2,6 +2,7 @@ import { WalletAdapterNetwork } from "@demox-labs/aleo-wallet-adapter-base";
 import { ConfirmTransferTicketRecord } from "../useConfirmTransferTicket";
 import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
 
+export const ZEROSECURE_BACKEND_URL = "http://localhost:3000";
 export const RPC_SERVER_TESTNET_BETA = "https://testnetbeta.aleorpc.com";
 export const RPC_SERVER_MAINNET_BETA = "https://mainnet.aleorpc.com";
 export const ZEROSECURE_PROGRAM_ID = "zerosecure_v2.aleo";
@@ -99,4 +100,22 @@ export async function filterOutExecutedTickets<
   localStorage.setItem("transfersExecuted", JSON.stringify(transfersExecuted));
 
   return finalTickets;
+}
+
+export async function getRandomAddressFromServer(
+  network: WalletAdapterNetwork
+) {
+  let networkText =
+    network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
+  return await fetch(
+    `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/randomAddress`
+  ).then((res) => res.text());
+}
+
+export async function getRandomFieldFromServer(network: WalletAdapterNetwork) {
+  let networkText =
+    network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
+  return await fetch(
+    `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/randomField`
+  ).then((res) => res.text());
 }

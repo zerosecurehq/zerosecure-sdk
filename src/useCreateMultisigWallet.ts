@@ -3,13 +3,13 @@ import {
   WalletAdapterNetwork,
 } from "@demox-labs/aleo-wallet-adapter-base";
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
-import { PrivateKey, Address } from "@provablehq/wasm/testnet.js";
 import { useState } from "react";
 import {
   BASE_FEE,
   waitTransactionToBeConfirmedOrError,
   ZEROSECURE_PROGRAM_ID,
   TransactionOptions,
+  getRandomAddressFromServer,
 } from "./utils";
 
 export interface MultisigWallet {
@@ -47,15 +47,13 @@ export function useCreateMultisigWallet({
       return setError(new Error("Wallet not connected"));
     }
     if (!multisigWallet.address) {
-      //create 32 random bytes Uint8Array
-      let randomBytes = new Uint8Array(32);
-      crypto.getRandomValues(randomBytes);
-      //create a random address from the random bytes
-      let random_address = Address.from_private_key(
-        PrivateKey.from_seed_unchecked(randomBytes)
-      );
-      // set the address to the multisigWallet object
-      multisigWallet.address = random_address.to_string();
+      try {
+        multisigWallet.address = await getRandomAddressFromServer(network);
+      } catch (error) {
+        return setError(
+          new Error("An error occurred while generating a random address")
+        );
+      }
     }
 
     if (multisigWallet.owners.length === 0) {

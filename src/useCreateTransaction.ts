@@ -5,12 +5,12 @@ import {
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import { WalletRecord } from "./useGetWalletCreated";
-import { Field } from "@provablehq/wasm/testnet.js";
 import {
   BASE_FEE,
   waitTransactionToBeConfirmedOrError,
   ZEROSECURE_PROGRAM_ID,
   TransactionOptions,
+  getRandomFieldFromServer,
 } from "./utils";
 
 export function useCreateTransaction({
@@ -53,12 +53,21 @@ export function useCreateTransaction({
       return setError(new Error("Invalid address"));
     }
 
+    let randomField: string;
+    try {
+      randomField = await getRandomFieldFromServer(network);
+    } catch (error) {
+      return setError(
+        new Error("An error occurred while generating a random field element")
+      );
+    }
+
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
       ZEROSECURE_PROGRAM_ID,
       "create_transfer",
-      [walletRecord, to, amount + "u64", Field.random().toString()],
+      [walletRecord, to, amount + "u64", randomField],
       BASE_FEE,
       feePrivate
     );

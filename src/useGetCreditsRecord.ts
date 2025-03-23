@@ -8,7 +8,7 @@ export interface CreditsRecord extends BaseRecord {
   };
 }
 
-export default function useGetCreditsRecord() {
+export function useGetCreditsRecord() {
   let { publicKey, requestRecords } = useWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
