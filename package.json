@@ -1,0 +1,27 @@
+{
+  "name": "zerosecurehq-sdk",
+  "version": "1.0.1",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@demox-labs/aleo-wallet-adapter-base": "^0.0.22",
+    "@demox-labs/aleo-wallet-adapter-react": "^0.0.21",
+    "@demox-labs/aleo-wallet-adapter-reactui": "^0.0.35",
+    "@provablehq/sdk": "^0.8.6",
+    "@types/crypto-js": "^4.2.2",
+    "aleo-adapters": "^1.2.1",
+    "crypto-js": "^4.2.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.12"
+  }
+}
