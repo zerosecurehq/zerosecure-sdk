@@ -100,7 +100,7 @@ export function useApplyExecuteTicket({
       ZEROSECURE_PROGRAM_ID,
       "execute_transfer",
       [ticket],
-      BASE_FEE,
+      BASE_FEE.execute_transfer,
       feePrivate
     );
 

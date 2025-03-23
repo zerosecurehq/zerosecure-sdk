@@ -1,12 +1,12 @@
 import { WalletAdapterNetwork } from "@demox-labs/aleo-wallet-adapter-base";
 import { ConfirmTransferTicketRecord } from "../useConfirmTransferTicket";
 import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
-
-export const ZEROSECURE_BACKEND_URL = "http://localhost:3000";
-export const RPC_SERVER_TESTNET_BETA = "https://testnetbeta.aleorpc.com";
-export const RPC_SERVER_MAINNET_BETA = "https://mainnet.aleorpc.com";
-export const ZEROSECURE_PROGRAM_ID = "zerosecure_v2.aleo";
-export const BASE_FEE = 100_000;
+import {
+  RPC_SERVER_MAINNET_BETA,
+  RPC_SERVER_TESTNET_BETA,
+  ZEROSECURE_BACKEND_URL,
+  ZEROSECURE_PROGRAM_ID,
+} from "./config";
 
 export async function wait(ms: number) {
   return new Promise((resolve) => {

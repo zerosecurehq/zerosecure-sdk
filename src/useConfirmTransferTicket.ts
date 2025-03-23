@@ -110,7 +110,7 @@ export function useApplyConfirmTransferTicket({
       ZEROSECURE_PROGRAM_ID,
       "confirm_transfer",
       [confirmTransferTicket],
-      BASE_FEE,
+      BASE_FEE.confirm_transfer,
       feePrivate
     );
 

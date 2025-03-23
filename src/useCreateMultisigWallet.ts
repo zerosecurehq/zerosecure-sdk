@@ -101,7 +101,7 @@ export function useCreateMultisigWallet({
           ],
         },
       ],
-      BASE_FEE,
+      BASE_FEE.create_wallet,
       feePrivate
     );
 

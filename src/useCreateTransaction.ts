@@ -68,7 +68,7 @@ export function useCreateTransaction({
       ZEROSECURE_PROGRAM_ID,
       "create_transfer",
       [walletRecord, to, amount + "u64", randomField],
-      BASE_FEE,
+      BASE_FEE.create_transfer,
       feePrivate
     );
 

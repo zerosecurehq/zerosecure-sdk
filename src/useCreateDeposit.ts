@@ -62,7 +62,7 @@ export function useCreateDeposit({
         ZEROSECURE_PROGRAM_ID,
         "deposit_private",
         [to, amount + "u64", feeRecord],
-        BASE_FEE,
+        BASE_FEE.deposit_private,
         feePrivate
       );
     } else {
@@ -72,7 +72,7 @@ export function useCreateDeposit({
         ZEROSECURE_PROGRAM_ID,
         "deposit_public",
         [to, amount + "u64"],
-        BASE_FEE,
+        BASE_FEE.deposit_public,
         feePrivate
       );
     }
