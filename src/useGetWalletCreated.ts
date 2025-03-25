@@ -22,6 +22,7 @@ export function useGetWalletCreated() {
    */
   const reset = () => {
     setError(null);
+    setIsProcessing(false);
   };
 
   /**

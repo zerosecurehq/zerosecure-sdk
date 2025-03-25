@@ -36,6 +36,7 @@ export function useGetConfirmTransferTicket({
    */
   const reset = () => {
     setError(null);
+    setIsProcessing(false);
   };
 
   /**

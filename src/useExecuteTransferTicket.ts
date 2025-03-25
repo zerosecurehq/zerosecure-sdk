@@ -37,6 +37,7 @@ export function useGetExecuteTicket({
    */
   const reset = () => {
     setError(null);
+    setIsProcessing(false);
   };
 
   const getExecuteTicket = async () => {

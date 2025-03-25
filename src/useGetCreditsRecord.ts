@@ -18,6 +18,7 @@ export function useGetCreditsRecord() {
    */
   const reset = () => {
     setError(null);
+    setIsProcessing(false);
   };
 
   const getCreditsRecord = async () => {
