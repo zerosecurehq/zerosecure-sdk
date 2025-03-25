@@ -84,12 +84,15 @@ export function useApplyConfirmTransferTicket({
   let { publicKey, requestTransaction, transactionStatus } = useWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
+  let [txId, setTxId] = useState<string | null>(null);
 
   /**
    * Reset the error state
    */
   const reset = () => {
     setError(null);
+    setTxId(null);
+    setIsProcessing(false);
   };
 
   /**
@@ -117,6 +120,7 @@ export function useApplyConfirmTransferTicket({
     try {
       setIsProcessing(true);
       let txId = await requestTransaction(transaction);
+      setTxId(txId);
       if (waitToBeConfirmed) {
         try {
           await waitTransactionToBeConfirmedOrError(txId, transactionStatus);
@@ -133,5 +137,5 @@ export function useApplyConfirmTransferTicket({
     }
   };
 
-  return { applyConfirmTransferTicket, isProcessing, error, reset };
+  return { applyConfirmTransferTicket, isProcessing, error, reset, txId };
 }

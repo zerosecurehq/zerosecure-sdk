@@ -29,12 +29,15 @@ export function useCreateMultisigWallet({
   let { publicKey, requestTransaction, transactionStatus } = useWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
+  let [txId, setTxId] = useState<string | null>(null);
 
   /**
    * Reset the error state
    */
   const reset = () => {
     setError(null);
+    setTxId(null);
+    setIsProcessing(false);
   };
 
   /**
@@ -108,6 +111,7 @@ export function useCreateMultisigWallet({
     try {
       setIsProcessing(true);
       let txId = await requestTransaction(transaction);
+      setTxId(txId);
       if (waitToBeConfirmed) {
         try {
           await waitTransactionToBeConfirmedOrError(txId, transactionStatus);
@@ -124,5 +128,5 @@ export function useCreateMultisigWallet({
     }
   };
 
-  return { createMultisigWallet, isProcessing, error, reset };
+  return { createMultisigWallet, isProcessing, error, reset, txId };
 }

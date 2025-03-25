@@ -81,12 +81,15 @@ export function useApplyExecuteTicket({
   let { publicKey, requestTransaction, transactionStatus } = useWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
+  let [txId, setTxId] = useState<string | null>(null);
 
   /**
    * Reset the error state
    */
   const reset = () => {
     setError(null);
+    setTxId(null);
+    setIsProcessing(false);
   };
 
   const applyExecuteTicket = async (ticket: ExecuteTicketRecord) => {
@@ -107,6 +110,7 @@ export function useApplyExecuteTicket({
     try {
       setIsProcessing(true);
       let txId = await requestTransaction(transaction);
+      setTxId(txId);
       if (waitToBeConfirmed) {
         try {
           await waitTransactionToBeConfirmedOrError(txId, transactionStatus);
@@ -123,5 +127,5 @@ export function useApplyExecuteTicket({
     }
   };
 
-  return { applyExecuteTicket, isProcessing, error, reset };
+  return { applyExecuteTicket, isProcessing, error, reset, txId };
 }

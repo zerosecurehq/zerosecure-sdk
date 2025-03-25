@@ -21,12 +21,15 @@ export function useCreateDeposit({
   let { publicKey, requestTransaction, transactionStatus } = useWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
+  let [txId, setTxId] = useState<string | null>(null);
 
   /**
    * Reset the error state
    */
   const reset = () => {
     setError(null);
+    setTxId(null);
+    setIsProcessing(false);
   };
 
   /**
@@ -80,6 +83,7 @@ export function useCreateDeposit({
     try {
       setIsProcessing(true);
       let txId = await requestTransaction(transaction);
+      setTxId(txId);
       if (waitToBeConfirmed) {
         try {
           await waitTransactionToBeConfirmedOrError(txId, transactionStatus);
@@ -96,5 +100,5 @@ export function useCreateDeposit({
     }
   };
 
-  return { createDeposit, isProcessing, error, reset };
+  return { createDeposit, isProcessing, error, reset, txId };
 }
