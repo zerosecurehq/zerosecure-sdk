@@ -62,6 +62,27 @@ export async function getMappingValue(
   ).then((res) => res.json());
 }
 
+export async function getMultisigWalletBalance(
+  network: WalletAdapterNetwork,
+  multisigWalletAddress: string
+): Promise<number> {
+  let multisigWalletAddressHashedToField: string =
+    await hashAddressToFieldFromServer(
+      network,
+      multisigWalletAddress.split(".")[0]
+    ); // remove the visibility modifier
+  let result = await getMappingValue(
+    network,
+    "balances",
+    multisigWalletAddressHashedToField
+  );
+  if (result.result === null) {
+    return 0;
+  } else {
+    return parseInt(result.result);
+  }
+}
+
 export async function filterOutExecutedTickets<
   T extends ConfirmTransferTicketRecord | ExecuteTicketRecord
 >(network: WalletAdapterNetwork, tickets: T[]) {
@@ -117,5 +138,25 @@ export async function getRandomFieldFromServer(network: WalletAdapterNetwork) {
     network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
   return await fetch(
     `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/randomField`
+  ).then((res) => res.text());
+}
+
+export async function hashAddressToFieldFromServer(
+  network: WalletAdapterNetwork,
+  address: string
+) {
+  let networkText =
+    network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
+  return await fetch(
+    `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/hashAddressToField`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        wallet_address: address,
+      }),
+    }
   ).then((res) => res.text());
 }
