@@ -1,3 +1,4 @@
+import JSON5 from "json5";
 import { WalletAdapterNetwork } from "@demox-labs/aleo-wallet-adapter-base";
 import { ConfirmTransferTicketRecord } from "../useConfirmTransferTicket";
 import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
@@ -7,6 +8,14 @@ import {
   ZEROSECURE_BACKEND_URL,
   ZEROSECURE_PROGRAM_ID,
 } from "./config";
+
+export function removeVisibleModifier(value: string) {
+  if (value.includes(".")) {
+    return value.split(".")[0];
+  } else {
+    return value;
+  }
+}
 
 export async function wait(ms: number) {
   return new Promise((resolve) => {
@@ -69,7 +78,7 @@ export async function getMultisigWalletBalance(
   let multisigWalletAddressHashedToField: string =
     await hashAddressToFieldFromServer(
       network,
-      multisigWalletAddress.split(".")[0]
+      removeVisibleModifier(multisigWalletAddress)
     ); // remove the visibility modifier
   let result = await getMappingValue(
     network,
@@ -77,7 +86,7 @@ export async function getMultisigWalletBalance(
     multisigWalletAddressHashedToField
   );
   if (result.result === null) {
-    return 0;
+    throw new Error("Multisig wallet not found");
   } else {
     return parseInt(result.result);
   }
@@ -108,7 +117,7 @@ export async function filterOutExecutedTickets<
     } = await getMappingValue(
       network,
       "transfers_status",
-      ticket.data.transfer_id.split(".")[0] // remove the visibility modifier
+      removeVisibleModifier(ticket.data.transfer_id)
     );
 
     if (result.result !== null) {
@@ -159,4 +168,23 @@ export async function hashAddressToFieldFromServer(
       }),
     }
   ).then((res) => res.text());
+}
+
+export async function getCurrentTransactionConfirmations(
+  network: WalletAdapterNetwork,
+  transferId: string
+) {
+  let result = await getMappingValue(
+    network,
+    "transfers_status",
+    removeVisibleModifier(transferId)
+  );
+  if (result.result === null) {
+    throw new Error("Transaction not found");
+  }
+  let confirmationsObject: {
+    confirmations: string;
+  } = JSON5.parse(result.result.replace(/u8/g, ""));
+
+  return parseInt(confirmationsObject.confirmations);
 }
