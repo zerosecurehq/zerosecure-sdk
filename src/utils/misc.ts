@@ -6,6 +6,7 @@ import {
   RPC_SERVER_MAINNET_BETA,
   RPC_SERVER_TESTNET_BETA,
   TRANSFER_MANAGER_PROGRAM_ID,
+  WALLET_MANAGER_PROGRAM_ID,
   ZEROSECURE_BACKEND_URL,
 } from "./config";
 import { ConfirmChangeGovernanceTicketRecord } from "../useConfirmChangeGovernanceTicket";
@@ -142,8 +143,47 @@ export async function filterOutExecutedChangeGovernanceTickets<
     | ConfirmChangeGovernanceTicketRecord
     | ExecuteChangeGovernanceTicketRecord
 >(network: WalletAdapterNetwork, tickets: T[]) {
-  // TODO: use wallet sequence to filter out outdated tickets
-  return tickets;
+  let ticketsExecuted: {
+    [key: string]: boolean;
+  } = {};
+
+  try {
+    let ticketsExecutedCacheString = localStorage.getItem(
+      "governancesExecuted"
+    );
+    if (ticketsExecutedCacheString) {
+      ticketsExecuted = JSON.parse(ticketsExecutedCacheString);
+    }
+  } catch (e) {}
+
+  let finalTickets: T[] = [];
+  for (let ticket of tickets) {
+    if (ticketsExecuted[ticket.data.request_id]) {
+      continue;
+    }
+    let result: {
+      result: string | null;
+    } = await getMappingValue(
+      network,
+      "wallet_sequence",
+      await hashAddressToFieldFromServer(
+        network,
+        removeVisibleModifier(ticket.data.wallet_address)
+      ),
+      WALLET_MANAGER_PROGRAM_ID
+    );
+
+    let onchainSequence = parseInt(result.result);
+    if (onchainSequence === parseInt(ticket.data.sequence)) {
+      finalTickets.push(ticket);
+    } else {
+      ticketsExecuted[ticket.data.request_id] = true;
+    }
+  }
+
+  localStorage.setItem("governancesExecuted", JSON.stringify(ticketsExecuted));
+
+  return finalTickets;
 }
 
 export async function getRandomAddressFromServer(
