@@ -1,40 +1,38 @@
+import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
+import { useState } from "react";
 import {
   Transaction,
   WalletAdapterNetwork,
 } from "@demox-labs/aleo-wallet-adapter-base";
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
-import { useState } from "react";
 import {
   BASE_FEE,
-  filterOutExecutedTransferTickets,
   waitTransactionToBeConfirmedOrError,
   BaseRecord,
   TransactionOptions,
-  CREDITS_TOKEN_ID,
-  getMappingObjectValue,
   TRANSFER_MANAGER_PROGRAM_ID,
+  GOVERNANCE_MANAGER_PROGRAM_ID,
+  filterOutExecutedChangeGovernanceTickets,
 } from "./utils";
 
-export interface ExecuteTicketData {
+export interface ExecuteChangeGovernanceTicketData {
+  request_id: string; // field
   wallet_address: string;
-  tokenId: string; // field
-  to: string;
-  amount: string; // u128
-  transfer_id: string; // field
-  threshold: string; // u8
+  sequence: string; // u64
+  new_owners: string[];
+  new_threshold: string; // u8
+  old_threshold: string; // u8
 }
 
-export interface ExecuteTicketRecord extends BaseRecord {
-  data: ExecuteTicketData;
-  id: string;
+export interface ExecuteChangeGovernanceTicketRecord extends BaseRecord {
+  data: ExecuteChangeGovernanceTicketData;
 }
 
-export function useGetExecuteTicket({
+export function useGetExecuteChangeGovernanceTicket({
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
   let { publicKey, requestRecords } = useWallet();
-  let [error, setError] = useState<Error | null>(null);
   let [isProcessing, setIsProcessing] = useState(false);
+  let [error, setError] = useState<Error | null>(null);
 
   /**
    * Reset the error state
@@ -44,29 +42,34 @@ export function useGetExecuteTicket({
     setIsProcessing(false);
   };
 
-  const getExecuteTicket = async () => {
+  /**
+   *
+   * @returns all unspent execute tickets
+   */
+  const getExecuteGovernanceTicket = async () => {
     try {
       if (!publicKey || !requestRecords) {
-        return setError(new Error("Wallet not connected"));
+        throw new Error("Wallet not connected");
       }
       setIsProcessing(true);
-      let executeTransfersTicketsAll: ExecuteTicketRecord[] =
-        await requestRecords(TRANSFER_MANAGER_PROGRAM_ID);
-      setIsProcessing(false);
-      let executeTransfersTicketsUnspent = executeTransfersTicketsAll
+      let tickets: ExecuteChangeGovernanceTicketRecord[] = await requestRecords(
+        TRANSFER_MANAGER_PROGRAM_ID
+      );
+
+      let unspentTickets = tickets
         .map((ticket) => {
           let recordName = ticket.recordName || ticket.name;
-          if (ticket.spent || recordName !== "ExecuteTransferTicket")
+          if (ticket.spent || recordName !== "ExecuteChangeGovernanceTicket")
             return null;
           return ticket;
         })
-        .filter((wallet) => wallet !== null);
+        .filter((ticket) => ticket !== null);
 
-      let finalTickets = await filterOutExecutedTransferTickets(
+      let finalTickets = await filterOutExecutedChangeGovernanceTickets(
         network,
-        executeTransfersTicketsUnspent
+        unspentTickets
       );
-
+      setIsProcessing(false);
       return finalTickets;
     } catch (error) {
       console.error(error);
@@ -75,10 +78,10 @@ export function useGetExecuteTicket({
     }
   };
 
-  return { getExecuteTicket, error, reset, isProcessing };
+  return { getExecuteGovernanceTicket, isProcessing, error, reset };
 }
 
-export function useApplyExecuteTicket({
+export function useApplyExecuteChangeGovernanceTicket({
   feePrivate = true,
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
@@ -97,36 +100,26 @@ export function useApplyExecuteTicket({
     setIsProcessing(false);
   };
 
-  const applyExecuteTicket = async (ticket: ExecuteTicketRecord) => {
+  /**
+   *
+   * @param ticket the ticket to confirm
+   * @returns transaction id
+   */
+  const applyExecuteChangeGovernanceTicket = async (
+    ticket: ExecuteChangeGovernanceTicketRecord
+  ) => {
     if (!publicKey || !requestTransaction || !transactionStatus) {
       return setError(new Error("Wallet not connected"));
     }
 
-    let external_authorization_required: boolean;
-    try {
-      let tokenMetaData = await getMappingObjectValue<{
-        external_authorization_required: boolean;
-      }>(
-        network,
-        "registered_tokens",
-        ticket.data.tokenId,
-        "token_registry.aleo"
-      );
-      external_authorization_required =
-        tokenMetaData.external_authorization_required;
-    } catch {
-      return setError(new Error("Error fetching token metadata"));
-    }
-
-    let isCreditsTransfer = ticket.data.tokenId === CREDITS_TOKEN_ID;
-
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
-      TRANSFER_MANAGER_PROGRAM_ID,
-      isCreditsTransfer ? "execute_aleo_transfer" : "execute_token_transfer",
-      isCreditsTransfer ? [ticket] : [ticket, external_authorization_required],
-      BASE_FEE.execute_transfer,
+      GOVERNANCE_MANAGER_PROGRAM_ID,
+      "execute_change_governance",
+      [ticket],
+      // TODO: change fee
+      BASE_FEE.confirm_transfer,
       feePrivate
     );
 
@@ -150,5 +143,11 @@ export function useApplyExecuteTicket({
     }
   };
 
-  return { applyExecuteTicket, isProcessing, error, reset, txId };
+  return {
+    applyExecuteChangeGovernanceTicket,
+    isProcessing,
+    error,
+    reset,
+    txId,
+  };
 }

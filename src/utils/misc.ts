@@ -8,6 +8,8 @@ import {
   TRANSFER_MANAGER_PROGRAM_ID,
   ZEROSECURE_BACKEND_URL,
 } from "./config";
+import { ConfirmChangeGovernanceTicketRecord } from "../useConfirmChangeGovernanceTicket";
+import { ExecuteChangeGovernanceTicketRecord } from "../useExecuteChangeGovernanceTicket";
 
 export function removeVisibleModifier(value: string) {
   if (value.includes(".")) {
@@ -94,7 +96,7 @@ export async function getMultisigWalletBalance(
   }
 }
 
-export async function filterOutExecutedTickets<
+export async function filterOutExecutedTransferTickets<
   T extends ConfirmTransferTicketRecord | ExecuteTicketRecord
 >(network: WalletAdapterNetwork, tickets: T[]) {
   let transfersExecuted: {
@@ -133,6 +135,15 @@ export async function filterOutExecutedTickets<
   localStorage.setItem("transfersExecuted", JSON.stringify(transfersExecuted));
 
   return finalTickets;
+}
+
+export async function filterOutExecutedChangeGovernanceTickets<
+  T extends
+    | ConfirmChangeGovernanceTicketRecord
+    | ExecuteChangeGovernanceTicketRecord
+>(network: WalletAdapterNetwork, tickets: T[]) {
+  // TODO: use wallet sequence to filter out outdated tickets
+  return tickets;
 }
 
 export async function getRandomAddressFromServer(

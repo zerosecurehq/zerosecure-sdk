@@ -6,7 +6,7 @@ import {
 } from "@demox-labs/aleo-wallet-adapter-base";
 import {
   BASE_FEE,
-  filterOutExecutedTickets,
+  filterOutExecutedTransferTickets,
   waitTransactionToBeConfirmedOrError,
   BaseRecord,
   TransactionOptions,
@@ -63,7 +63,7 @@ export function useGetConfirmTransferTicket({
         })
         .filter((ticket) => ticket !== null);
 
-      let finalTickets = await filterOutExecutedTickets(
+      let finalTickets = await filterOutExecutedTransferTickets(
         network,
         confirmTransfersTicketsUnspent
       );
