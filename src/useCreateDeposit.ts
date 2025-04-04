@@ -5,7 +5,6 @@ import {
 } from "@demox-labs/aleo-wallet-adapter-base";
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
-import { CreditsRecord, TokenRecord } from "./useGetCreditsRecord";
 import {
   TransactionOptions,
   BASE_FEE,
@@ -13,6 +12,8 @@ import {
   CREDITS_TOKEN_ID,
   TRANSFER_MANAGER_PROGRAM_ID,
 } from "./utils";
+import { CreditsRecord } from "./useGetCreditsRecord";
+import { TokenRecord } from "./useGetTokenRecord";
 
 export function useCreateDeposit({
   feePrivate = true,
