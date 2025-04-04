@@ -56,7 +56,7 @@ export default function useCreateChangeGovernance({
       [
         {
           program: GOVERNANCE_MANAGER_PROGRAM_ID,
-          functionName: "create_wallet",
+          functionName: "change_governance",
           inputs: [wallet, randomField, newOwners, newThreshold + "u8"],
         },
       ],
