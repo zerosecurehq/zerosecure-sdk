@@ -5,8 +5,8 @@ import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
 import {
   RPC_SERVER_MAINNET_BETA,
   RPC_SERVER_TESTNET_BETA,
+  TRANSFER_MANAGER_PROGRAM_ID,
   ZEROSECURE_BACKEND_URL,
-  ZEROSECURE_PROGRAM_ID,
 } from "./config";
 
 export function removeVisibleModifier(value: string) {
@@ -43,8 +43,9 @@ export async function waitTransactionToBeConfirmedOrError(
 
 export async function getMappingValue(
   network: WalletAdapterNetwork,
-  mapping: "balances" | "transfers_status",
-  key: string
+  mapping: string,
+  key: string,
+  programId: string
 ): Promise<{
   result: string | null;
 }> {
@@ -62,7 +63,7 @@ export async function getMappingValue(
         id: 1,
         method: "getMappingValue",
         params: {
-          program_id: ZEROSECURE_PROGRAM_ID,
+          program_id: programId,
           mapping_name: mapping,
           key: key,
         },
@@ -83,7 +84,8 @@ export async function getMultisigWalletBalance(
   let result = await getMappingValue(
     network,
     "balances",
-    multisigWalletAddressHashedToField
+    multisigWalletAddressHashedToField,
+    TRANSFER_MANAGER_PROGRAM_ID
   );
   if (result.result === null) {
     throw new Error("Multisig wallet not found");
@@ -117,7 +119,8 @@ export async function filterOutExecutedTickets<
     } = await getMappingValue(
       network,
       "transfers_status",
-      removeVisibleModifier(ticket.data.transfer_id)
+      removeVisibleModifier(ticket.data.transfer_id),
+      TRANSFER_MANAGER_PROGRAM_ID
     );
 
     if (result.result !== null) {
@@ -170,6 +173,7 @@ export async function hashAddressToFieldFromServer(
   ).then((res) => res.text());
 }
 
+// TODO: replace with getMappingObjectValue
 export async function getCurrentTransactionConfirmations(
   network: WalletAdapterNetwork,
   transferId: string
@@ -177,7 +181,8 @@ export async function getCurrentTransactionConfirmations(
   let result = await getMappingValue(
     network,
     "transfers_status",
-    removeVisibleModifier(transferId)
+    removeVisibleModifier(transferId),
+    TRANSFER_MANAGER_PROGRAM_ID
   );
   if (result.result === null) {
     throw new Error("Transaction not found");
@@ -187,4 +192,29 @@ export async function getCurrentTransactionConfirmations(
   } = JSON5.parse(result.result.replace(/u8/g, ""));
 
   return parseInt(confirmationsObject.confirmations);
+}
+
+export async function getMappingObjectValue<T>(
+  network: WalletAdapterNetwork,
+  mapping: string,
+  key: string,
+  programId: string
+) {
+  let result = await getMappingValue(
+    network,
+    mapping,
+    removeVisibleModifier(key),
+    programId
+  );
+  if (result.result === null) {
+    throw new Error("Mapping not found");
+  }
+  let object: T = JSON5.parse(
+    result.result.replace(
+      /bool|i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|field|group|scalar|address|signature/g,
+      ""
+    )
+  );
+
+  return object;
 }

@@ -8,6 +8,15 @@ export interface CreditsRecord extends BaseRecord {
   };
 }
 
+export interface TokenRecord extends BaseRecord {
+  data: {
+    amount: string; //u128
+    token_id: string; //field
+    external_authorization_required: boolean;
+    authorized_until: string; //u32
+  };
+}
+
 export function useGetCreditsRecord() {
   let { publicKey, requestRecords } = useWallet();
   let [isProcessing, setIsProcessing] = useState(false);

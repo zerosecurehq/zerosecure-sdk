@@ -8,16 +8,18 @@ import {
   BASE_FEE,
   filterOutExecutedTickets,
   waitTransactionToBeConfirmedOrError,
-  ZEROSECURE_PROGRAM_ID,
   BaseRecord,
   TransactionOptions,
+  TRANSFER_MANAGER_PROGRAM_ID,
 } from "./utils";
 
 export interface ConfirmTransferTicketData {
   wallet_address: string;
-  amount: string;
-  transfer_id: string;
+  tokenId: string; // field
   to: string;
+  amount: string; // u128
+  transfer_id: string; // field
+  threshold: string; // u8
 }
 
 export interface ConfirmTransferTicketRecord extends BaseRecord {
@@ -50,7 +52,7 @@ export function useGetConfirmTransferTicket({
       }
       setIsProcessing(true);
       let confirmTransfersTicketsAll: ConfirmTransferTicketRecord[] =
-        await requestRecords(ZEROSECURE_PROGRAM_ID);
+        await requestRecords(TRANSFER_MANAGER_PROGRAM_ID);
 
       let confirmTransfersTicketsUnspent = confirmTransfersTicketsAll
         .map((ticket) => {
@@ -111,7 +113,7 @@ export function useApplyConfirmTransferTicket({
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
-      ZEROSECURE_PROGRAM_ID,
+      TRANSFER_MANAGER_PROGRAM_ID,
       "confirm_transfer",
       [confirmTransferTicket],
       BASE_FEE.confirm_transfer,

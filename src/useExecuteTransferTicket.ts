@@ -8,16 +8,20 @@ import {
   BASE_FEE,
   filterOutExecutedTickets,
   waitTransactionToBeConfirmedOrError,
-  ZEROSECURE_PROGRAM_ID,
   BaseRecord,
   TransactionOptions,
+  CREDITS_TOKEN_ID,
+  getMappingObjectValue,
+  TRANSFER_MANAGER_PROGRAM_ID,
 } from "./utils";
 
 export interface ExecuteTicketData {
   wallet_address: string;
-  amount: string;
-  transfer_id: string;
+  tokenId: string; // field
   to: string;
+  amount: string; // u128
+  transfer_id: string; // field
+  threshold: string; // u8
 }
 
 export interface ExecuteTicketRecord extends BaseRecord {
@@ -47,7 +51,7 @@ export function useGetExecuteTicket({
       }
       setIsProcessing(true);
       let executeTransfersTicketsAll: ExecuteTicketRecord[] =
-        await requestRecords(ZEROSECURE_PROGRAM_ID);
+        await requestRecords(TRANSFER_MANAGER_PROGRAM_ID);
       setIsProcessing(false);
       let executeTransfersTicketsUnspent = executeTransfersTicketsAll
         .map((ticket) => {
@@ -98,12 +102,30 @@ export function useApplyExecuteTicket({
       return setError(new Error("Wallet not connected"));
     }
 
+    let external_authorization_required: boolean;
+    try {
+      let tokenMetaData = await getMappingObjectValue<{
+        external_authorization_required: boolean;
+      }>(
+        network,
+        "registered_tokens",
+        ticket.data.tokenId,
+        "token_registry.aleo"
+      );
+      external_authorization_required =
+        tokenMetaData.external_authorization_required;
+    } catch {
+      return setError(new Error("Error fetching token metadata"));
+    }
+
+    let isCreditsTransfer = ticket.data.tokenId === CREDITS_TOKEN_ID;
+
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
-      ZEROSECURE_PROGRAM_ID,
-      "execute_transfer",
-      [ticket],
+      TRANSFER_MANAGER_PROGRAM_ID,
+      isCreditsTransfer ? "execute_aleo_transfer" : "execute_token_transfer",
+      isCreditsTransfer ? [ticket] : [ticket, external_authorization_required],
       BASE_FEE.execute_transfer,
       feePrivate
     );

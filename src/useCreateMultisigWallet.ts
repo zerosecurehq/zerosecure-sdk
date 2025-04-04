@@ -7,9 +7,9 @@ import { useState } from "react";
 import {
   BASE_FEE,
   waitTransactionToBeConfirmedOrError,
-  ZEROSECURE_PROGRAM_ID,
   TransactionOptions,
   getRandomAddressFromServer,
+  WALLET_MANAGER_PROGRAM_ID,
 } from "./utils";
 
 export interface MultisigWallet {
@@ -95,7 +95,7 @@ export function useCreateMultisigWallet({
       network,
       [
         {
-          program: ZEROSECURE_PROGRAM_ID,
+          program: WALLET_MANAGER_PROGRAM_ID,
           functionName: "create_wallet",
           inputs: [
             multisigWallet.address,

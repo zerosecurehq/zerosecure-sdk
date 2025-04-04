@@ -1,11 +1,12 @@
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
-import { ZEROSECURE_PROGRAM_ID, BaseRecord } from "./utils";
+import { BaseRecord, WALLET_MANAGER_PROGRAM_ID } from "./utils";
 
 export interface WalletRecordData {
   wallet_address: string;
   owners: string[];
-  threshold: number;
+  threshold: string; // u8
+  sequence: string; // u64
 }
 
 export interface WalletRecord extends BaseRecord {
@@ -36,7 +37,7 @@ export function useGetWalletCreated() {
       }
       setIsProcessing(true);
       let walletCreated: WalletRecord[] = await requestRecords(
-        ZEROSECURE_PROGRAM_ID
+        WALLET_MANAGER_PROGRAM_ID
       );
       setIsProcessing(false);
       return walletCreated
