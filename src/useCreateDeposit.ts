@@ -81,8 +81,9 @@ export function useCreateDeposit({
         isCreditsDeposit
           ? [to, amount + "u128"]
           : [to, tokenId, amount + "u128"],
-        // TODO: use different fee for token deposit
-        BASE_FEE.deposit_public,
+        isCreditsDeposit
+          ? BASE_FEE.deposit_aleo_public
+          : BASE_FEE.deposit_token_public,
         feePrivate
       );
     }
