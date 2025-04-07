@@ -245,6 +245,13 @@ export async function getCurrentTransactionConfirmations(
   return parseInt(confirmationsObject.confirmations);
 }
 
+export function removeContractDataType(value: string) {
+  return value.replace(
+    /bool|i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|field|group|scalar|address|signature/g,
+    ""
+  );
+}
+
 export async function getMappingObjectValue<T>(
   network: WalletAdapterNetwork,
   mapping: string,
@@ -260,12 +267,7 @@ export async function getMappingObjectValue<T>(
   if (result.result === null) {
     throw new Error("Mapping not found");
   }
-  let object: T = JSON5.parse(
-    result.result.replace(
-      /bool|i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|field|group|scalar|address|signature/g,
-      ""
-    )
-  );
+  let object: T = JSON5.parse(removeContractDataType(result.result));
 
   return object;
 }

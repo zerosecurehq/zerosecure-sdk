@@ -6,3 +6,6 @@ export * from "./useCreateTransaction";
 export * from "./useExecuteTransferTicket";
 export * from "./useGetCreditsRecord";
 export * from "./useGetWalletCreated";
+export * from "./useCreateChangeGovernance";
+export * from "./useConfirmChangeGovernanceTicket";
+export * from "./useExecuteChangeGovernanceTicket";

@@ -9,7 +9,6 @@ import {
   waitTransactionToBeConfirmedOrError,
   BaseRecord,
   TransactionOptions,
-  TRANSFER_MANAGER_PROGRAM_ID,
   GOVERNANCE_MANAGER_PROGRAM_ID,
   filterOutExecutedChangeGovernanceTickets,
 } from "./utils";
@@ -49,11 +48,11 @@ export function useGetExecuteChangeGovernanceTicket({
   const getExecuteGovernanceTicket = async () => {
     try {
       if (!publicKey || !requestRecords) {
-        throw new Error("Wallet not connected");
+        return setError(new Error("Wallet not connected"));
       }
       setIsProcessing(true);
       let tickets: ExecuteChangeGovernanceTicketRecord[] = await requestRecords(
-        TRANSFER_MANAGER_PROGRAM_ID
+        GOVERNANCE_MANAGER_PROGRAM_ID
       );
 
       let unspentTickets = tickets
@@ -118,8 +117,7 @@ export function useApplyExecuteChangeGovernanceTicket({
       GOVERNANCE_MANAGER_PROGRAM_ID,
       "execute_change_governance",
       [ticket],
-      // TODO: change fee
-      BASE_FEE.confirm_transfer,
+      BASE_FEE.execute_change_governance,
       feePrivate
     );
 

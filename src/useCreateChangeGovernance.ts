@@ -6,6 +6,7 @@ import {
   BASE_FEE,
   getRandomFieldFromServer,
   GOVERNANCE_MANAGER_PROGRAM_ID,
+  removeContractDataType,
   TransactionOptions,
   waitTransactionToBeConfirmedOrError,
 } from "./utils";
@@ -13,7 +14,7 @@ import { useState } from "react";
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { WalletRecord } from "./useGetWalletCreated";
 
-export default function useCreateChangeGovernance({
+export function useCreateChangeGovernance({
   feePrivate = true,
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
@@ -57,11 +58,17 @@ export default function useCreateChangeGovernance({
         {
           program: GOVERNANCE_MANAGER_PROGRAM_ID,
           functionName: "change_governance",
-          inputs: [wallet, randomField, newOwners, newThreshold + "u8"],
+          inputs: [
+            wallet,
+            randomField,
+            `[${newOwners
+              .map((owner) => removeContractDataType(owner))
+              .toString()}]`,
+            newThreshold + "u8",
+          ],
         },
       ],
-      // TODO: change fee
-      BASE_FEE.create_wallet,
+      BASE_FEE.change_governance,
       feePrivate
     );
 

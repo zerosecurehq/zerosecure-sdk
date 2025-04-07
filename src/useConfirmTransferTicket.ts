@@ -48,7 +48,7 @@ export function useGetConfirmTransferTicket({
   const getConfirmTransferTicket = async () => {
     try {
       if (!publicKey || !requestRecords) {
-        throw new Error("Wallet not connected");
+        return setError(new Error("Wallet not connected"));
       }
       setIsProcessing(true);
       let confirmTransfersTicketsAll: ConfirmTransferTicketRecord[] =
