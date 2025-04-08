@@ -68,8 +68,9 @@ export function useCreateDeposit({
         TRANSFER_MANAGER_PROGRAM_ID,
         isCreditsDeposit ? "deposit_aleo_private" : "deposit_token_private",
         [to, amount + "u128", depositRecord as TokenRecord],
-        // TODO: use different fee for token deposit
-        BASE_FEE.deposit_private,
+        isCreditsDeposit
+          ? BASE_FEE.deposit_aleo_private
+          : BASE_FEE.deposit_token_private,
         feePrivate
       );
     } else {

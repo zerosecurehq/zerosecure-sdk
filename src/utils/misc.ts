@@ -11,6 +11,8 @@ import {
 } from "./config";
 import { ConfirmChangeGovernanceTicketRecord } from "../useConfirmChangeGovernanceTicket";
 import { ExecuteChangeGovernanceTicketRecord } from "../useExecuteChangeGovernanceTicket";
+import { WalletRecord } from "../useGetWalletCreated";
+import { calcEncryptionKeyFromWalletRecord } from "./crypto";
 
 export function removeVisibleModifier(value: string) {
   if (value.includes(".")) {
@@ -51,6 +53,7 @@ export async function getMappingValue(
   programId: string
 ): Promise<{
   result: string | null;
+  error: any | null;
 }> {
   return await fetch(
     network === WalletAdapterNetwork.MainnetBeta
@@ -119,6 +122,7 @@ export async function filterOutExecutedTransferTickets<
     }
     let result: {
       result: string | null;
+      error: any | null;
     } = await getMappingValue(
       network,
       "transfers_status",
@@ -128,7 +132,7 @@ export async function filterOutExecutedTransferTickets<
 
     if (result.result !== null) {
       finalTickets.push(ticket);
-    } else if (result.result === null) {
+    } else if (result.result === null && !result.error) {
       transfersExecuted[ticket.data.transfer_id] = true;
     }
   }
@@ -163,6 +167,7 @@ export async function filterOutExecutedChangeGovernanceTickets<
     }
     let result: {
       result: string | null;
+      error: any | null;
     } = await getMappingValue(
       network,
       "wallet_sequence",
@@ -176,7 +181,7 @@ export async function filterOutExecutedChangeGovernanceTickets<
     let onchainSequence = parseInt(result.result);
     if (onchainSequence === parseInt(ticket.data.sequence)) {
       finalTickets.push(ticket);
-    } else {
+    } else if (!result.error) {
       ticketsExecuted[ticket.data.request_id] = true;
     }
   }
@@ -184,6 +189,52 @@ export async function filterOutExecutedChangeGovernanceTickets<
   localStorage.setItem("governancesExecuted", JSON.stringify(ticketsExecuted));
 
   return finalTickets;
+}
+
+export async function filterOutdatedWalletRecord<T extends WalletRecord>(
+  network: WalletAdapterNetwork,
+  wallets: T[]
+) {
+  let outdatedWallets: {
+    [key: string]: boolean;
+  } = {};
+
+  try {
+    let walletCacheString = localStorage.getItem("walletSequence");
+    if (walletCacheString) {
+      outdatedWallets = JSON.parse(walletCacheString);
+    }
+  } catch (e) {}
+
+  let finalWallets: T[] = [];
+  for (let wallet of wallets) {
+    if (outdatedWallets[calcEncryptionKeyFromWalletRecord(wallet)]) {
+      continue;
+    }
+    let result: {
+      result: string | null;
+      error: any | null;
+    } = await getMappingValue(
+      network,
+      "wallet_sequence",
+      await hashAddressToFieldFromServer(
+        network,
+        removeVisibleModifier(wallet.data.wallet_address)
+      ),
+      WALLET_MANAGER_PROGRAM_ID
+    );
+
+    let onchainSequence = parseInt(result.result);
+    if (onchainSequence === parseInt(wallet.data.sequence)) {
+      finalWallets.push(wallet);
+    } else if (!result.error) {
+      outdatedWallets[calcEncryptionKeyFromWalletRecord(wallet)] = true;
+    }
+  }
+
+  localStorage.setItem("walletSequence", JSON.stringify(outdatedWallets));
+
+  return finalWallets;
 }
 
 export async function getRandomAddressFromServer(

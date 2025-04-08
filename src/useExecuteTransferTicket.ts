@@ -126,7 +126,9 @@ export function useApplyExecuteTicket({
       TRANSFER_MANAGER_PROGRAM_ID,
       isCreditsTransfer ? "execute_aleo_transfer" : "execute_token_transfer",
       isCreditsTransfer ? [ticket] : [ticket, external_authorization_required],
-      BASE_FEE.execute_transfer,
+      isCreditsTransfer
+        ? BASE_FEE.execute_aleo_transfer
+        : BASE_FEE.execute_token_transfer,
       feePrivate
     );
 
