@@ -1,12 +1,12 @@
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
-import { BaseRecord } from "./utils";
+import { BaseRecord, removeVisibleModifier } from "./utils";
 
 export interface TokenRecord extends BaseRecord {
   data: {
     amount: string; //u128
     token_id: string; //field
-    external_authorization_required: boolean;
+    external_authorization_required: string; //bool
     authorized_until: string; //u32
   };
 }
@@ -24,7 +24,7 @@ export function useGetTokenRecord() {
     setIsProcessing(false);
   };
 
-  const getTokenRecord = async () => {
+  const getTokenRecord = async (tokenId: string) => {
     if (!publicKey || !requestRecords) {
       return setError(new Error("Wallet not connected"));
     }
@@ -40,7 +40,11 @@ export function useGetTokenRecord() {
           if (record.status && record.status !== "Unspent") return null;
           return record;
         })
-        .filter((record) => record !== null);
+        .filter(
+          (record) =>
+            record !== null &&
+            removeVisibleModifier(record.data.token_id) === tokenId
+        );
     } catch (error) {
       setIsProcessing(false);
       setError(error as Error);

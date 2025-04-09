@@ -16,16 +16,16 @@ export const BASE_FEE = {
   ////// Wallet Manager Fees //////
   create_wallet: 26_500,
   ////// Wallet Transfer Fees //////
-  deposit_token_public: 116_665,
-  deposit_token_private: 87_585,
-  deposit_aleo_public: 52_821,
-  deposit_aleo_private: 37_237,
-  create_transfer: 38_446,
-  confirm_transfer: 20_493,
-  execute_aleo_transfer: 50_934,
-  execute_token_transfer: 69_317,
+  deposit_token_public: 117_000,
+  deposit_token_private: 88_000,
+  deposit_aleo_public: 53_000,
+  deposit_aleo_private: 38_000,
+  create_transfer: 39_000,
+  confirm_transfer: 21_000,
+  execute_aleo_transfer: 51_000,
+  execute_token_transfer: 70_000,
   ////// Wallet Governance Fees //////
-  change_governance: 61_154,
-  confirm_change_governance: 21_797,
-  execute_change_governance: 101_793,
+  change_governance: 62_000,
+  confirm_change_governance: 22_000,
+  execute_change_governance: 102_000,
 };

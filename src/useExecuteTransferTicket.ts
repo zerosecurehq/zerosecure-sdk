@@ -13,11 +13,12 @@ import {
   CREDITS_TOKEN_ID,
   getMappingObjectValue,
   TRANSFER_MANAGER_PROGRAM_ID,
+  removeVisibleModifier,
 } from "./utils";
 
 export interface ExecuteTicketData {
   wallet_address: string;
-  tokenId: string; // field
+  token_id: string; // field
   to: string;
   amount: string; // u128
   transfer_id: string; // field
@@ -102,30 +103,34 @@ export function useApplyExecuteTicket({
       return setError(new Error("Wallet not connected"));
     }
 
+    let isCreditsTransfer =
+      removeVisibleModifier(ticket.data.token_id) === CREDITS_TOKEN_ID;
     let external_authorization_required: boolean;
     try {
-      let tokenMetaData = await getMappingObjectValue<{
-        external_authorization_required: boolean;
-      }>(
-        network,
-        "registered_tokens",
-        ticket.data.tokenId,
-        "token_registry.aleo"
-      );
-      external_authorization_required =
-        tokenMetaData.external_authorization_required;
+      if (!isCreditsTransfer) {
+        let tokenMetaData = await getMappingObjectValue<{
+          external_authorization_required: boolean;
+        }>(
+          network,
+          "registered_tokens",
+          removeVisibleModifier(ticket.data.token_id),
+          "token_registry.aleo"
+        );
+        external_authorization_required =
+          tokenMetaData.external_authorization_required;
+      }
     } catch {
       return setError(new Error("Error fetching token metadata"));
     }
-
-    let isCreditsTransfer = ticket.data.tokenId === CREDITS_TOKEN_ID;
 
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
       TRANSFER_MANAGER_PROGRAM_ID,
       isCreditsTransfer ? "execute_aleo_transfer" : "execute_token_transfer",
-      isCreditsTransfer ? [ticket] : [ticket, external_authorization_required],
+      isCreditsTransfer
+        ? [ticket]
+        : [ticket, `${external_authorization_required}`],
       isCreditsTransfer
         ? BASE_FEE.execute_aleo_transfer
         : BASE_FEE.execute_token_transfer,

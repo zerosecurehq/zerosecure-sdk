@@ -85,6 +85,14 @@ export function useCreateMultisigWallet({
       );
     }
 
+    //check address is unique in the owners array
+    let uniqueAddresses = multisigWallet.owners.filter(
+      (owner, index) => multisigWallet.owners.indexOf(owner) === index
+    );
+    if (uniqueAddresses.length !== multisigWallet.owners.length) {
+      return setError(new Error("Duplicate owner address found"));
+    }
+
     //fill the owners array with the zero address
     while (multisigWallet.owners.length < 8) {
       multisigWallet.owners.push(ZERO_ADDRESS);

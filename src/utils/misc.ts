@@ -275,25 +275,20 @@ export async function hashAddressToFieldFromServer(
   ).then((res) => res.text());
 }
 
-// TODO: replace with getMappingObjectValue
 export async function getCurrentTransactionConfirmations(
   network: WalletAdapterNetwork,
   transferId: string
 ) {
-  let result = await getMappingValue(
+  let object: {
+    confirmations: number;
+  } = await getMappingObjectValue(
     network,
     "transfers_status",
     removeVisibleModifier(transferId),
     TRANSFER_MANAGER_PROGRAM_ID
   );
-  if (result.result === null) {
-    throw new Error("Transaction not found");
-  }
-  let confirmationsObject: {
-    confirmations: string;
-  } = JSON5.parse(result.result.replace(/u8/g, ""));
 
-  return parseInt(confirmationsObject.confirmations);
+  return object.confirmations;
 }
 
 export function removeContractDataType(value: string) {
@@ -318,7 +313,12 @@ export async function getMappingObjectValue<T>(
   if (result.result === null) {
     throw new Error("Mapping not found");
   }
-  let object: T = JSON5.parse(removeContractDataType(result.result));
+  let removedContractDataTypeResult = removeContractDataType(result.result);
+  let addressWrappedResult = removedContractDataTypeResult.replace(
+    /(\w+:)\s*(aleo1[a-zA-Z0-9]{58})/g,
+    "$1 '$2'"
+  );
 
+  let object: T = JSON5.parse(addressWrappedResult);
   return object;
 }

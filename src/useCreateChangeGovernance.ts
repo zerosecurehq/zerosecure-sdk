@@ -9,6 +9,7 @@ import {
   removeContractDataType,
   TransactionOptions,
   waitTransactionToBeConfirmedOrError,
+  ZERO_ADDRESS,
 } from "./utils";
 import { useState } from "react";
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
@@ -51,6 +52,53 @@ export function useCreateChangeGovernance({
       );
     }
 
+    if (newOwners.length === 0) {
+      return setError(new Error("Owners cannot be empty"));
+    }
+
+    if (newOwners.length > 8) {
+      return setError(new Error("Owners cannot be more than 8"));
+    }
+
+    if (newThreshold < 1) {
+      return setError(new Error("Threshold cannot be less than 1"));
+    }
+
+    // make sure all onwers are valid addresses
+    for (let owner of newOwners) {
+      if (owner.length !== 63) {
+        return setError(new Error("Invalid owner address " + owner));
+      }
+    }
+
+    //check if the threshold is less than the number of owners
+    if (newThreshold > newOwners.length) {
+      return setError(
+        new Error("Threshold cannot be greater than the number of owners")
+      );
+    }
+
+    //check address is unique in the owners array except the zero address
+    let uniqueOwners = newOwners.filter(
+      (owner, index) =>
+        newOwners.indexOf(owner) === index && owner !== ZERO_ADDRESS
+    );
+    let newOwnersWithoutZeroAddress = newOwners.filter(
+      (owner) => owner !== ZERO_ADDRESS
+    );
+    if (uniqueOwners.length !== newOwnersWithoutZeroAddress.length) {
+      return setError(new Error("Duplicate owner address found"));
+    }
+
+    //fill the owners array with the zero address
+    while (newOwners.length < 8) {
+      newOwners.push(ZERO_ADDRESS);
+    }
+
+    let ownersFormated = newOwners
+      .map((owner) => removeContractDataType(owner))
+      .toString();
+
     let transaction = new Transaction(
       publicKey as string,
       network,
@@ -61,9 +109,7 @@ export function useCreateChangeGovernance({
           inputs: [
             wallet,
             randomField,
-            `[${newOwners
-              .map((owner) => removeContractDataType(owner))
-              .toString()}]`,
+            `[${ownersFormated}]`,
             newThreshold + "u8",
           ],
         },
