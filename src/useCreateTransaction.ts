@@ -8,9 +8,9 @@ import { WalletRecord } from "./useGetWalletCreated";
 import {
   BASE_FEE,
   waitTransactionToBeConfirmedOrError,
-  ZEROSECURE_PROGRAM_ID,
   TransactionOptions,
   getRandomFieldFromServer,
+  TRANSFER_MANAGER_PROGRAM_ID,
 } from "./utils";
 
 export function useCreateTransaction({
@@ -41,6 +41,7 @@ export function useCreateTransaction({
    */
   const createTransaction = async (
     walletRecord: WalletRecord,
+    tokenId: string,
     to: string,
     amount: number
   ) => {
@@ -68,9 +69,9 @@ export function useCreateTransaction({
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
-      ZEROSECURE_PROGRAM_ID,
+      TRANSFER_MANAGER_PROGRAM_ID,
       "create_transfer",
-      [walletRecord, to, amount + "u64", randomField],
+      [walletRecord, tokenId, to, amount + "u128", randomField],
       BASE_FEE.create_transfer,
       feePrivate
     );

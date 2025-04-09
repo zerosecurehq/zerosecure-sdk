@@ -10,6 +10,7 @@ export function calcEncryptionKeyFromWalletRecord(walletRecord: WalletRecord) {
     string += owner;
   }
   string += walletRecord.data.threshold;
+  string += walletRecord.data.sequence;
   return sha256(string).toString(CryptoJS.enc.Hex);
 }
 

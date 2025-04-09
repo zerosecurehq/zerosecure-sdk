@@ -5,9 +5,14 @@ import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
 import {
   RPC_SERVER_MAINNET_BETA,
   RPC_SERVER_TESTNET_BETA,
+  TRANSFER_MANAGER_PROGRAM_ID,
+  WALLET_MANAGER_PROGRAM_ID,
   ZEROSECURE_BACKEND_URL,
-  ZEROSECURE_PROGRAM_ID,
 } from "./config";
+import { ConfirmChangeGovernanceTicketRecord } from "../useConfirmChangeGovernanceTicket";
+import { ExecuteChangeGovernanceTicketRecord } from "../useExecuteChangeGovernanceTicket";
+import { WalletRecord } from "../useGetWalletCreated";
+import { calcEncryptionKeyFromWalletRecord } from "./crypto";
 
 export function removeVisibleModifier(value: string) {
   if (value.includes(".")) {
@@ -43,10 +48,12 @@ export async function waitTransactionToBeConfirmedOrError(
 
 export async function getMappingValue(
   network: WalletAdapterNetwork,
-  mapping: "balances" | "transfers_status",
-  key: string
+  mapping: string,
+  key: string,
+  programId: string
 ): Promise<{
   result: string | null;
+  error: any | null;
 }> {
   return await fetch(
     network === WalletAdapterNetwork.MainnetBeta
@@ -62,7 +69,7 @@ export async function getMappingValue(
         id: 1,
         method: "getMappingValue",
         params: {
-          program_id: ZEROSECURE_PROGRAM_ID,
+          program_id: programId,
           mapping_name: mapping,
           key: key,
         },
@@ -83,7 +90,8 @@ export async function getMultisigWalletBalance(
   let result = await getMappingValue(
     network,
     "balances",
-    multisigWalletAddressHashedToField
+    multisigWalletAddressHashedToField,
+    TRANSFER_MANAGER_PROGRAM_ID
   );
   if (result.result === null) {
     throw new Error("Multisig wallet not found");
@@ -92,7 +100,7 @@ export async function getMultisigWalletBalance(
   }
 }
 
-export async function filterOutExecutedTickets<
+export async function filterOutExecutedTransferTickets<
   T extends ConfirmTransferTicketRecord | ExecuteTicketRecord
 >(network: WalletAdapterNetwork, tickets: T[]) {
   let transfersExecuted: {
@@ -114,15 +122,17 @@ export async function filterOutExecutedTickets<
     }
     let result: {
       result: string | null;
+      error: any | null;
     } = await getMappingValue(
       network,
       "transfers_status",
-      removeVisibleModifier(ticket.data.transfer_id)
+      removeVisibleModifier(ticket.data.transfer_id),
+      TRANSFER_MANAGER_PROGRAM_ID
     );
 
     if (result.result !== null) {
       finalTickets.push(ticket);
-    } else if (result.result === null) {
+    } else if (result.result === null && !result.error) {
       transfersExecuted[ticket.data.transfer_id] = true;
     }
   }
@@ -130,6 +140,101 @@ export async function filterOutExecutedTickets<
   localStorage.setItem("transfersExecuted", JSON.stringify(transfersExecuted));
 
   return finalTickets;
+}
+
+export async function filterOutExecutedChangeGovernanceTickets<
+  T extends
+    | ConfirmChangeGovernanceTicketRecord
+    | ExecuteChangeGovernanceTicketRecord
+>(network: WalletAdapterNetwork, tickets: T[]) {
+  let ticketsExecuted: {
+    [key: string]: boolean;
+  } = {};
+
+  try {
+    let ticketsExecutedCacheString = localStorage.getItem(
+      "governancesExecuted"
+    );
+    if (ticketsExecutedCacheString) {
+      ticketsExecuted = JSON.parse(ticketsExecutedCacheString);
+    }
+  } catch (e) {}
+
+  let finalTickets: T[] = [];
+  for (let ticket of tickets) {
+    if (ticketsExecuted[ticket.data.request_id]) {
+      continue;
+    }
+    let result: {
+      result: string | null;
+      error: any | null;
+    } = await getMappingValue(
+      network,
+      "wallet_sequence",
+      await hashAddressToFieldFromServer(
+        network,
+        removeVisibleModifier(ticket.data.wallet_address)
+      ),
+      WALLET_MANAGER_PROGRAM_ID
+    );
+
+    let onchainSequence = parseInt(result.result);
+    if (onchainSequence === parseInt(ticket.data.sequence)) {
+      finalTickets.push(ticket);
+    } else if (!result.error) {
+      ticketsExecuted[ticket.data.request_id] = true;
+    }
+  }
+
+  localStorage.setItem("governancesExecuted", JSON.stringify(ticketsExecuted));
+
+  return finalTickets;
+}
+
+export async function filterOutdatedWalletRecord<T extends WalletRecord>(
+  network: WalletAdapterNetwork,
+  wallets: T[]
+) {
+  let outdatedWallets: {
+    [key: string]: boolean;
+  } = {};
+
+  try {
+    let walletCacheString = localStorage.getItem("walletSequence");
+    if (walletCacheString) {
+      outdatedWallets = JSON.parse(walletCacheString);
+    }
+  } catch (e) {}
+
+  let finalWallets: T[] = [];
+  for (let wallet of wallets) {
+    if (outdatedWallets[calcEncryptionKeyFromWalletRecord(wallet)]) {
+      continue;
+    }
+    let result: {
+      result: string | null;
+      error: any | null;
+    } = await getMappingValue(
+      network,
+      "wallet_sequence",
+      await hashAddressToFieldFromServer(
+        network,
+        removeVisibleModifier(wallet.data.wallet_address)
+      ),
+      WALLET_MANAGER_PROGRAM_ID
+    );
+
+    let onchainSequence = parseInt(result.result);
+    if (onchainSequence === parseInt(wallet.data.sequence)) {
+      finalWallets.push(wallet);
+    } else if (!result.error) {
+      outdatedWallets[calcEncryptionKeyFromWalletRecord(wallet)] = true;
+    }
+  }
+
+  localStorage.setItem("walletSequence", JSON.stringify(outdatedWallets));
+
+  return finalWallets;
 }
 
 export async function getRandomAddressFromServer(
@@ -174,17 +279,46 @@ export async function getCurrentTransactionConfirmations(
   network: WalletAdapterNetwork,
   transferId: string
 ) {
-  let result = await getMappingValue(
+  let object: {
+    confirmations: number;
+  } = await getMappingObjectValue(
     network,
     "transfers_status",
-    removeVisibleModifier(transferId)
+    removeVisibleModifier(transferId),
+    TRANSFER_MANAGER_PROGRAM_ID
+  );
+
+  return object.confirmations;
+}
+
+export function removeContractDataType(value: string) {
+  return value.replace(
+    /bool|i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|field|group|scalar|address|signature/g,
+    ""
+  );
+}
+
+export async function getMappingObjectValue<T>(
+  network: WalletAdapterNetwork,
+  mapping: string,
+  key: string,
+  programId: string
+) {
+  let result = await getMappingValue(
+    network,
+    mapping,
+    removeVisibleModifier(key),
+    programId
   );
   if (result.result === null) {
-    throw new Error("Transaction not found");
+    throw new Error("Mapping not found");
   }
-  let confirmationsObject: {
-    confirmations: string;
-  } = JSON5.parse(result.result.replace(/u8/g, ""));
+  let removedContractDataTypeResult = removeContractDataType(result.result);
+  let addressWrappedResult = removedContractDataTypeResult.replace(
+    /(\w+:)\s*(aleo1[a-zA-Z0-9]{58})/g,
+    "$1 '$2'"
+  );
 
-  return parseInt(confirmationsObject.confirmations);
+  let object: T = JSON5.parse(addressWrappedResult);
+  return object;
 }

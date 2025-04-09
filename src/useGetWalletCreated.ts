@@ -1,11 +1,18 @@
 import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
-import { ZEROSECURE_PROGRAM_ID, BaseRecord } from "./utils";
+import {
+  BaseRecord,
+  filterOutdatedWalletRecord,
+  TransactionOptions,
+  WALLET_MANAGER_PROGRAM_ID,
+} from "./utils";
+import { WalletAdapterNetwork } from "@demox-labs/aleo-wallet-adapter-base";
 
 export interface WalletRecordData {
   wallet_address: string;
   owners: string[];
-  threshold: number;
+  threshold: string; // u8
+  sequence: string; // u64
 }
 
 export interface WalletRecord extends BaseRecord {
@@ -29,17 +36,19 @@ export function useGetWalletCreated() {
    *
    * @returns all multisig wallets you created or you are part of
    */
-  const getWalletCreated = async () => {
+  const getWalletCreated = async ({
+    network = WalletAdapterNetwork.TestnetBeta,
+  }: TransactionOptions = {}) => {
     try {
       if (!publicKey || !requestRecords) {
         return setError(new Error("Wallet not connected"));
       }
       setIsProcessing(true);
       let walletCreated: WalletRecord[] = await requestRecords(
-        ZEROSECURE_PROGRAM_ID
+        WALLET_MANAGER_PROGRAM_ID
       );
       setIsProcessing(false);
-      return walletCreated
+      let unspentWallets = walletCreated
         .map((wallet) => {
           let recordName = wallet.recordName || wallet.name;
           if (wallet.spent || recordName !== "Wallet") return null;
@@ -47,6 +56,7 @@ export function useGetWalletCreated() {
           return wallet;
         })
         .filter((wallet) => wallet !== null);
+      return await filterOutdatedWalletRecord(network, unspentWallets);
     } catch (error) {
       console.error(error);
       setIsProcessing(false);

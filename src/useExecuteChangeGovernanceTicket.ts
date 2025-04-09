@@ -6,27 +6,27 @@ import {
 } from "@demox-labs/aleo-wallet-adapter-base";
 import {
   BASE_FEE,
-  filterOutExecutedTransferTickets,
   waitTransactionToBeConfirmedOrError,
   BaseRecord,
   TransactionOptions,
-  TRANSFER_MANAGER_PROGRAM_ID,
+  GOVERNANCE_MANAGER_PROGRAM_ID,
+  filterOutExecutedChangeGovernanceTickets,
 } from "./utils";
 
-export interface ConfirmTransferTicketData {
+export interface ExecuteChangeGovernanceTicketData {
+  request_id: string; // field
   wallet_address: string;
-  tokenId: string; // field
-  to: string;
-  amount: string; // u128
-  transfer_id: string; // field
-  threshold: string; // u8
+  sequence: string; // u64
+  new_owners: string[];
+  new_threshold: string; // u8
+  old_threshold: string; // u8
 }
 
-export interface ConfirmTransferTicketRecord extends BaseRecord {
-  data: ConfirmTransferTicketData;
+export interface ExecuteChangeGovernanceTicketRecord extends BaseRecord {
+  data: ExecuteChangeGovernanceTicketData;
 }
 
-export function useGetConfirmTransferTicket({
+export function useGetExecuteChangeGovernanceTicket({
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
   let { publicKey, requestRecords } = useWallet();
@@ -43,29 +43,30 @@ export function useGetConfirmTransferTicket({
 
   /**
    *
-   * @returns all unspent confirm transfer tickets
+   * @returns all unspent execute tickets
    */
-  const getConfirmTransferTicket = async () => {
+  const getExecuteGovernanceTicket = async () => {
     try {
       if (!publicKey || !requestRecords) {
         return setError(new Error("Wallet not connected"));
       }
       setIsProcessing(true);
-      let confirmTransfersTicketsAll: ConfirmTransferTicketRecord[] =
-        await requestRecords(TRANSFER_MANAGER_PROGRAM_ID);
+      let tickets: ExecuteChangeGovernanceTicketRecord[] = await requestRecords(
+        GOVERNANCE_MANAGER_PROGRAM_ID
+      );
 
-      let confirmTransfersTicketsUnspent = confirmTransfersTicketsAll
+      let unspentTickets = tickets
         .map((ticket) => {
           let recordName = ticket.recordName || ticket.name;
-          if (ticket.spent || recordName !== "ConfirmTransferTicket")
+          if (ticket.spent || recordName !== "ExecuteChangeGovernanceTicket")
             return null;
           return ticket;
         })
         .filter((ticket) => ticket !== null);
 
-      let finalTickets = await filterOutExecutedTransferTickets(
+      let finalTickets = await filterOutExecutedChangeGovernanceTickets(
         network,
-        confirmTransfersTicketsUnspent
+        unspentTickets
       );
       setIsProcessing(false);
       return finalTickets;
@@ -76,10 +77,10 @@ export function useGetConfirmTransferTicket({
     }
   };
 
-  return { getConfirmTransferTicket, isProcessing, error, reset };
+  return { getExecuteGovernanceTicket, isProcessing, error, reset };
 }
 
-export function useApplyConfirmTransferTicket({
+export function useApplyExecuteChangeGovernanceTicket({
   feePrivate = true,
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
@@ -100,11 +101,11 @@ export function useApplyConfirmTransferTicket({
 
   /**
    *
-   * @param confirmTransferTicket the ticket to confirm transfer
+   * @param ticket the ticket to confirm
    * @returns transaction id
    */
-  const applyConfirmTransferTicket = async (
-    confirmTransferTicket: ConfirmTransferTicketRecord
+  const applyExecuteChangeGovernanceTicket = async (
+    ticket: ExecuteChangeGovernanceTicketRecord
   ) => {
     if (!publicKey || !requestTransaction || !transactionStatus) {
       return setError(new Error("Wallet not connected"));
@@ -113,10 +114,10 @@ export function useApplyConfirmTransferTicket({
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
-      TRANSFER_MANAGER_PROGRAM_ID,
-      "confirm_transfer",
-      [confirmTransferTicket],
-      BASE_FEE.confirm_transfer,
+      GOVERNANCE_MANAGER_PROGRAM_ID,
+      "execute_change_governance",
+      [ticket],
+      BASE_FEE.execute_change_governance,
       feePrivate
     );
 
@@ -140,5 +141,11 @@ export function useApplyConfirmTransferTicket({
     }
   };
 
-  return { applyConfirmTransferTicket, isProcessing, error, reset, txId };
+  return {
+    applyExecuteChangeGovernanceTicket,
+    isProcessing,
+    error,
+    reset,
+    txId,
+  };
 }

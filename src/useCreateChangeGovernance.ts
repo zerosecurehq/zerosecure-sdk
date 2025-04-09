@@ -2,26 +2,20 @@ import {
   Transaction,
   WalletAdapterNetwork,
 } from "@demox-labs/aleo-wallet-adapter-base";
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
-import { useState } from "react";
 import {
   BASE_FEE,
-  waitTransactionToBeConfirmedOrError,
+  getRandomFieldFromServer,
+  GOVERNANCE_MANAGER_PROGRAM_ID,
+  removeContractDataType,
   TransactionOptions,
-  getRandomAddressFromServer,
-  WALLET_MANAGER_PROGRAM_ID,
+  waitTransactionToBeConfirmedOrError,
+  ZERO_ADDRESS,
 } from "./utils";
+import { useState } from "react";
+import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
+import { WalletRecord } from "./useGetWalletCreated";
 
-export interface MultisigWallet {
-  address?: string;
-  owners: string[];
-  threshold: number;
-}
-
-const ZERO_ADDRESS =
-  "aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc";
-
-export function useCreateMultisigWallet({
+export function useCreateChangeGovernance({
   feePrivate = true,
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
@@ -40,79 +34,87 @@ export function useCreateMultisigWallet({
     setIsProcessing(false);
   };
 
-  /**
-   *
-   * @param multisigWallet the multisig wallet object
-   * @returns transaction id
-   */
-  const createMultisigWallet = async (multisigWallet: MultisigWallet) => {
+  const createChangeGovernance = async (
+    wallet: WalletRecord,
+    newOwners: string[],
+    newThreshold: number
+  ) => {
     if (!publicKey || !requestTransaction || !transactionStatus) {
       return setError(new Error("Wallet not connected"));
     }
-    if (!multisigWallet.address) {
-      try {
-        multisigWallet.address = await getRandomAddressFromServer(network);
-      } catch (error) {
-        return setError(
-          new Error("An error occurred while generating a random address")
-        );
-      }
+
+    let randomField: string;
+    try {
+      randomField = await getRandomFieldFromServer(network);
+    } catch (error) {
+      return setError(
+        new Error("An error occurred while generating a random field element")
+      );
     }
 
-    if (multisigWallet.owners.length === 0) {
+    if (newOwners.length === 0) {
       return setError(new Error("Owners cannot be empty"));
     }
 
-    if (multisigWallet.owners.length > 8) {
+    if (newOwners.length > 8) {
       return setError(new Error("Owners cannot be more than 8"));
     }
 
-    if (multisigWallet.threshold < 1) {
+    if (newThreshold < 1) {
       return setError(new Error("Threshold cannot be less than 1"));
     }
 
     // make sure all onwers are valid addresses
-    for (let owner of multisigWallet.owners) {
+    for (let owner of newOwners) {
       if (owner.length !== 63) {
         return setError(new Error("Invalid owner address " + owner));
       }
     }
 
     //check if the threshold is less than the number of owners
-    if (multisigWallet.threshold > multisigWallet.owners.length) {
+    if (newThreshold > newOwners.length) {
       return setError(
         new Error("Threshold cannot be greater than the number of owners")
       );
     }
 
-    //check address is unique in the owners array
-    let uniqueAddresses = multisigWallet.owners.filter(
-      (owner, index) => multisigWallet.owners.indexOf(owner) === index
+    //check address is unique in the owners array except the zero address
+    let uniqueOwners = newOwners.filter(
+      (owner, index) =>
+        newOwners.indexOf(owner) === index && owner !== ZERO_ADDRESS
     );
-    if (uniqueAddresses.length !== multisigWallet.owners.length) {
+    let newOwnersWithoutZeroAddress = newOwners.filter(
+      (owner) => owner !== ZERO_ADDRESS
+    );
+    if (uniqueOwners.length !== newOwnersWithoutZeroAddress.length) {
       return setError(new Error("Duplicate owner address found"));
     }
 
     //fill the owners array with the zero address
-    while (multisigWallet.owners.length < 8) {
-      multisigWallet.owners.push(ZERO_ADDRESS);
+    while (newOwners.length < 8) {
+      newOwners.push(ZERO_ADDRESS);
     }
+
+    let ownersFormated = newOwners
+      .map((owner) => removeContractDataType(owner))
+      .toString();
 
     let transaction = new Transaction(
       publicKey as string,
       network,
       [
         {
-          program: WALLET_MANAGER_PROGRAM_ID,
-          functionName: "create_wallet",
+          program: GOVERNANCE_MANAGER_PROGRAM_ID,
+          functionName: "change_governance",
           inputs: [
-            multisigWallet.address,
-            `[${multisigWallet.owners.toString()}]`,
-            multisigWallet.threshold.toString() + "u8",
+            wallet,
+            randomField,
+            `[${ownersFormated}]`,
+            newThreshold + "u8",
           ],
         },
       ],
-      BASE_FEE.create_wallet,
+      BASE_FEE.change_governance,
       feePrivate
     );
 
@@ -136,5 +138,5 @@ export function useCreateMultisigWallet({
     }
   };
 
-  return { createMultisigWallet, isProcessing, error, reset, txId };
+  return { createChangeGovernance, isProcessing, error, reset, txId };
 }

@@ -6,18 +6,23 @@ import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import {
   BASE_FEE,
-  filterOutExecutedTickets,
+  filterOutExecutedTransferTickets,
   waitTransactionToBeConfirmedOrError,
-  ZEROSECURE_PROGRAM_ID,
   BaseRecord,
   TransactionOptions,
+  CREDITS_TOKEN_ID,
+  getMappingObjectValue,
+  TRANSFER_MANAGER_PROGRAM_ID,
+  removeVisibleModifier,
 } from "./utils";
 
 export interface ExecuteTicketData {
   wallet_address: string;
-  amount: string;
-  transfer_id: string;
+  token_id: string; // field
   to: string;
+  amount: string; // u128
+  transfer_id: string; // field
+  threshold: string; // u8
 }
 
 export interface ExecuteTicketRecord extends BaseRecord {
@@ -47,7 +52,7 @@ export function useGetExecuteTicket({
       }
       setIsProcessing(true);
       let executeTransfersTicketsAll: ExecuteTicketRecord[] =
-        await requestRecords(ZEROSECURE_PROGRAM_ID);
+        await requestRecords(TRANSFER_MANAGER_PROGRAM_ID);
       setIsProcessing(false);
       let executeTransfersTicketsUnspent = executeTransfersTicketsAll
         .map((ticket) => {
@@ -58,7 +63,7 @@ export function useGetExecuteTicket({
         })
         .filter((wallet) => wallet !== null);
 
-      let finalTickets = await filterOutExecutedTickets(
+      let finalTickets = await filterOutExecutedTransferTickets(
         network,
         executeTransfersTicketsUnspent
       );
@@ -98,13 +103,37 @@ export function useApplyExecuteTicket({
       return setError(new Error("Wallet not connected"));
     }
 
+    let isCreditsTransfer =
+      removeVisibleModifier(ticket.data.token_id) === CREDITS_TOKEN_ID;
+    let external_authorization_required: boolean;
+    try {
+      if (!isCreditsTransfer) {
+        let tokenMetaData = await getMappingObjectValue<{
+          external_authorization_required: boolean;
+        }>(
+          network,
+          "registered_tokens",
+          removeVisibleModifier(ticket.data.token_id),
+          "token_registry.aleo"
+        );
+        external_authorization_required =
+          tokenMetaData.external_authorization_required;
+      }
+    } catch {
+      return setError(new Error("Error fetching token metadata"));
+    }
+
     let transaction = Transaction.createTransaction(
       publicKey,
       network,
-      ZEROSECURE_PROGRAM_ID,
-      "execute_transfer",
-      [ticket],
-      BASE_FEE.execute_transfer,
+      TRANSFER_MANAGER_PROGRAM_ID,
+      isCreditsTransfer ? "execute_aleo_transfer" : "execute_token_transfer",
+      isCreditsTransfer
+        ? [ticket]
+        : [ticket, `${external_authorization_required}`],
+      isCreditsTransfer
+        ? BASE_FEE.execute_aleo_transfer
+        : BASE_FEE.execute_token_transfer,
       feePrivate
     );
 
