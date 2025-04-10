@@ -3,6 +3,7 @@ import { WalletAdapterNetwork } from "@demox-labs/aleo-wallet-adapter-base";
 import { ConfirmTransferTicketRecord } from "../useConfirmTransferTicket";
 import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
 import {
+  CREDITS_TOKEN_ID,
   RPC_SERVER_MAINNET_BETA,
   RPC_SERVER_TESTNET_BETA,
   TRANSFER_MANAGER_PROGRAM_ID,
@@ -13,6 +14,8 @@ import { ConfirmChangeGovernanceTicketRecord } from "../useConfirmChangeGovernan
 import { ExecuteChangeGovernanceTicketRecord } from "../useExecuteChangeGovernanceTicket";
 import { WalletRecord } from "../useGetWalletCreated";
 import { calcEncryptionKeyFromWalletRecord } from "./crypto";
+import { TokenMetadata } from "./types";
+import { bigIntToString } from "./contract";
 
 export function removeVisibleModifier(value: string) {
   if (value.includes(".")) {
@@ -80,13 +83,14 @@ export async function getMappingValue(
 
 export async function getMultisigWalletBalance(
   network: WalletAdapterNetwork,
-  multisigWalletAddress: string
+  multisigWalletAddress: string,
+  tokenId: string = CREDITS_TOKEN_ID
 ): Promise<number> {
   let multisigWalletAddressHashedToField: string =
     await hashAddressToFieldFromServer(
       network,
       removeVisibleModifier(multisigWalletAddress)
-    ); // remove the visibility modifier
+    );
   let result = await getMappingValue(
     network,
     "balances",
@@ -321,4 +325,27 @@ export async function getMappingObjectValue<T>(
 
   let object: T = JSON5.parse(addressWrappedResult);
   return object;
+}
+
+export async function getTokenMetadata(
+  network: WalletAdapterNetwork,
+  tokenId: string
+) {
+  let tokenObject: {
+    name: number;
+    symbol: number;
+  } = await getMappingObjectValue(
+    network,
+    "registered_tokens",
+    tokenId,
+    "token_registry.aleo"
+  );
+
+  let tokenMetadata = {
+    token_id: tokenId,
+    name: bigIntToString(BigInt(tokenObject.name), true),
+    symbol: bigIntToString(BigInt(tokenObject.symbol), true),
+  };
+
+  return tokenMetadata as TokenMetadata;
 }
