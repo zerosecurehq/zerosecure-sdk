@@ -15,3 +15,9 @@ export interface TransactionOptions {
   waitToBeConfirmed?: boolean;
   network?: WalletAdapterNetwork;
 }
+
+export interface TokenMetadata {
+  token_id: string;
+  name: string;
+  symbol: string;
+}
