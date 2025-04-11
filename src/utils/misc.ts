@@ -86,15 +86,16 @@ export async function getMultisigWalletBalance(
   multisigWalletAddress: string,
   tokenId: string = CREDITS_TOKEN_ID
 ): Promise<number> {
-  let multisigWalletAddressHashedToField: string =
-    await hashAddressToFieldFromServer(
+  let multisigBalanceKeyHashedToField: string =
+    await hashBalanceKeyToFieldFromServer(
       network,
-      removeVisibleModifier(multisigWalletAddress)
+      removeVisibleModifier(multisigWalletAddress),
+      removeVisibleModifier(tokenId)
     );
   let result = await getMappingValue(
     network,
     "balances",
-    multisigWalletAddressHashedToField,
+    multisigBalanceKeyHashedToField,
     TRANSFER_MANAGER_PROGRAM_ID
   );
   if (result.result === null) {
@@ -274,6 +275,28 @@ export async function hashAddressToFieldFromServer(
       },
       body: JSON.stringify({
         wallet_address: address,
+      }),
+    }
+  ).then((res) => res.text());
+}
+
+export async function hashBalanceKeyToFieldFromServer(
+  network: WalletAdapterNetwork,
+  walletAddress: string,
+  tokenId: string
+) {
+  let networkText =
+    network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
+  return await fetch(
+    `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/hashBalanceKeyToField`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        wallet_address: walletAddress,
+        token_id: tokenId,
       }),
     }
   ).then((res) => res.text());
