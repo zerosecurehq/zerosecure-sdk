@@ -4,6 +4,7 @@ import { ConfirmTransferTicketRecord } from "../useConfirmTransferTicket";
 import { ExecuteTicketRecord } from "../useExecuteTransferTicket";
 import {
   CREDITS_TOKEN_ID,
+  GOVERNANCE_MANAGER_PROGRAM_ID,
   RPC_SERVER_MAINNET_BETA,
   RPC_SERVER_TESTNET_BETA,
   TRANSFER_MANAGER_PROGRAM_ID,
@@ -313,6 +314,22 @@ export async function getCurrentTransactionConfirmations(
     "transfers_status",
     removeVisibleModifier(transferId),
     TRANSFER_MANAGER_PROGRAM_ID
+  );
+
+  return object.confirmations;
+}
+
+export async function getCurrentGovernanceChangeConfirmations(
+  network: WalletAdapterNetwork,
+  request_id: string
+) {
+  let object: {
+    confirmations: number;
+  } = await getMappingObjectValue(
+    network,
+    "change_governance_status",
+    removeVisibleModifier(request_id),
+    GOVERNANCE_MANAGER_PROGRAM_ID
   );
 
   return object.confirmations;
