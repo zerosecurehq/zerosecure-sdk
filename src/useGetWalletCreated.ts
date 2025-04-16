@@ -47,7 +47,6 @@ export function useGetWalletCreated() {
       let walletCreated: WalletRecord[] = await requestRecords(
         WALLET_MANAGER_PROGRAM_ID
       );
-      setIsProcessing(false);
       let unspentWallets = walletCreated
         .map((wallet) => {
           let recordName = wallet.recordName || wallet.name;
@@ -56,7 +55,12 @@ export function useGetWalletCreated() {
           return wallet;
         })
         .filter((wallet) => wallet !== null);
-      return await filterOutdatedWalletRecord(network, unspentWallets);
+      let finalWallets = await filterOutdatedWalletRecord(
+        network,
+        unspentWallets
+      );
+      setIsProcessing(false);
+      return finalWallets as WalletRecord[];
     } catch (error) {
       console.error(error);
       setIsProcessing(false);
