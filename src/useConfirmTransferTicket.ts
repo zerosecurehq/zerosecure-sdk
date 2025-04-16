@@ -15,7 +15,7 @@ import {
 
 export interface ConfirmTransferTicketData {
   wallet_address: string;
-  tokenId: string; // field
+  token_id: string; // field
   to: string;
   amount: string; // u128
   transfer_id: string; // field
