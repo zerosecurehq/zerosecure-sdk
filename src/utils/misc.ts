@@ -265,9 +265,26 @@ export async function hashAddressToFieldFromServer(
   network: WalletAdapterNetwork,
   address: string
 ) {
+  // Check if the address is already in local storage
+  let localCacheString = localStorage.getItem("addressToField");
+  let localCache: {
+    [key: string]: string;
+  } = {};
+  if (localCacheString) {
+    try {
+      localCache = JSON.parse(localCacheString);
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
+    }
+  }
+  if (localCache[address]) {
+    return localCache[address];
+  }
+
+  // If not, fetch from the server and store in local storage
   let networkText =
     network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
-  return await fetch(
+  let field = await fetch(
     `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/hashAddressToField`,
     {
       method: "POST",
@@ -279,6 +296,9 @@ export async function hashAddressToFieldFromServer(
       }),
     }
   ).then((res) => res.text());
+  localCache[address] = field;
+  localStorage.setItem("addressToField", JSON.stringify(localCache));
+  return field;
 }
 
 export async function hashBalanceKeyToFieldFromServer(
@@ -286,9 +306,26 @@ export async function hashBalanceKeyToFieldFromServer(
   walletAddress: string,
   tokenId: string
 ) {
+  // Check if the address is already in local storage
+  let localCacheString = localStorage.getItem("balanceKeyToField");
+  let localCache: {
+    [key: string]: string;
+  } = {};
+  if (localCacheString) {
+    try {
+      localCache = JSON.parse(localCacheString);
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
+    }
+  }
+  let key = `${walletAddress}-${tokenId}`;
+  if (localCache[key]) {
+    return localCache[key];
+  }
+  // If not, fetch from the server and store in local storage
   let networkText =
     network === WalletAdapterNetwork.MainnetBeta ? "mainnet" : "testnetbeta";
-  return await fetch(
+  let field = await fetch(
     `${ZEROSECURE_BACKEND_URL}/${networkText}/utils/hashBalanceKeyToField`,
     {
       method: "POST",
@@ -301,6 +338,9 @@ export async function hashBalanceKeyToFieldFromServer(
       }),
     }
   ).then((res) => res.text());
+  localCache[key] = field;
+  localStorage.setItem("balanceKeyToField", JSON.stringify(localCache));
+  return field;
 }
 
 export async function getCurrentTransactionConfirmations(
