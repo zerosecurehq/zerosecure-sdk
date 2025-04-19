@@ -9,3 +9,4 @@ export * from "./useGetWalletCreated";
 export * from "./useCreateChangeGovernance";
 export * from "./useConfirmChangeGovernanceTicket";
 export * from "./useExecuteChangeGovernanceTicket";
+export * from "./useCreateChangeRole";
