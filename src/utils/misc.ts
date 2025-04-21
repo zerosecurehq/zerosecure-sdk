@@ -411,6 +411,22 @@ export async function getTokenMetadata(
   network: WalletAdapterNetwork,
   tokenId: string
 ) {
+  // Check if the token metadata is already in local storage
+  let tokenMetadataCacheString = localStorage.getItem("tokenMetadata");
+  let tokenMetadataCache: {
+    [key: string]: TokenMetadata;
+  } = {};
+  if (tokenMetadataCacheString) {
+    try {
+      tokenMetadataCache = JSON.parse(tokenMetadataCacheString);
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
+    }
+  }
+  if (tokenMetadataCache[tokenId]) {
+    return tokenMetadataCache[tokenId];
+  }
+  // If not, fetch from the server and store in local storage
   let tokenObject: {
     name: number;
     symbol: number;
@@ -426,6 +442,9 @@ export async function getTokenMetadata(
     name: bigIntToString(BigInt(tokenObject.name), true),
     symbol: bigIntToString(BigInt(tokenObject.symbol), true),
   };
+
+  tokenMetadataCache[tokenId] = tokenMetadata;
+  localStorage.setItem("tokenMetadata", JSON.stringify(tokenMetadataCache));
 
   return tokenMetadata as TokenMetadata;
 }
