@@ -12,16 +12,16 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@demox-labs/aleo-wallet-adapter-base": "^0.0.22",
-    "@demox-labs/aleo-wallet-adapter-react": "^0.0.21",
-    "@demox-labs/aleo-wallet-adapter-reactui": "^0.0.35",
+    "@demox-labs/aleo-wallet-adapter-base": "^0.0.23",
+    "@demox-labs/aleo-wallet-adapter-react": "^0.0.22",
+    "@demox-labs/aleo-wallet-adapter-reactui": "^0.0.36",
     "aleo-adapters": "^1.2.1",
     "crypto-js": "^4.2.0",
     "json5": "^2.2.3",
-    "react": "^19.0.0"
+    "react": "^19.1.0"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
-    "@types/react": "^19.0.12"
+    "@types/react": "^19.1.8"
   }
 }
