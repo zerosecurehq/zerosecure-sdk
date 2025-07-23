@@ -1,4 +1,3 @@
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import {
   Transaction,
@@ -12,6 +11,7 @@ import {
   GOVERNANCE_MANAGER_PROGRAM_ID,
   filterOutExecutedChangeGovernanceTickets,
 } from "./utils";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export interface ExecuteChangeGovernanceTicketData {
   request_id: string; // field
@@ -29,7 +29,7 @@ export interface ExecuteChangeGovernanceTicketRecord extends BaseRecord {
 export function useGetExecuteChangeGovernanceTicket({
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestRecords } = useWallet();
+  let { publicKey, requestRecords } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
 
@@ -85,7 +85,7 @@ export function useApplyExecuteChangeGovernanceTicket({
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestTransaction, transactionStatus } = useWallet();
+  let { publicKey, requestTransaction, transactionStatus } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
   let [txId, setTxId] = useState<string | null>(null);

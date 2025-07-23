@@ -1,6 +1,6 @@
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import { BaseRecord } from "./utils";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export interface CreditsRecord extends BaseRecord {
   data: {
@@ -9,7 +9,7 @@ export interface CreditsRecord extends BaseRecord {
 }
 
 export function useGetCreditsRecord() {
-  let { publicKey, requestRecords } = useWallet();
+  let { publicKey, requestRecords } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
 

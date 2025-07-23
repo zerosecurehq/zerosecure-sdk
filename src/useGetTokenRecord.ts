@@ -1,6 +1,6 @@
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import { BaseRecord, removeVisibleModifier } from "./utils";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export interface TokenRecord extends BaseRecord {
   data: {
@@ -12,7 +12,7 @@ export interface TokenRecord extends BaseRecord {
 }
 
 export function useGetTokenRecord() {
-  let { publicKey, requestRecords } = useWallet();
+  let { publicKey, requestRecords } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
 

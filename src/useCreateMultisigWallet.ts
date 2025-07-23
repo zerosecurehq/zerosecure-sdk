@@ -2,7 +2,6 @@ import {
   Transaction,
   WalletAdapterNetwork,
 } from "@demox-labs/aleo-wallet-adapter-base";
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import {
   BASE_FEE,
@@ -11,6 +10,7 @@ import {
   getRandomAddressFromServer,
   WALLET_MANAGER_PROGRAM_ID,
 } from "./utils";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export interface MultisigWallet {
   address?: string;
@@ -26,7 +26,7 @@ export function useCreateMultisigWallet({
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestTransaction, transactionStatus } = useWallet();
+  let { publicKey, requestTransaction, transactionStatus } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
   let [txId, setTxId] = useState<string | null>(null);

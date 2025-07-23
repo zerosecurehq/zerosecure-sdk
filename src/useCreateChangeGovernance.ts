@@ -12,15 +12,15 @@ import {
   ZERO_ADDRESS,
 } from "./utils";
 import { useState } from "react";
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { WalletRecord } from "./useGetWalletCreated";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export function useCreateChangeGovernance({
   feePrivate = true,
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestTransaction, transactionStatus } = useWallet();
+  let { publicKey, requestTransaction, transactionStatus } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
   let [txId, setTxId] = useState<string | null>(null);

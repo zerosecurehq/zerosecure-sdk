@@ -2,7 +2,6 @@ import {
   Transaction,
   WalletAdapterNetwork,
 } from "@demox-labs/aleo-wallet-adapter-base";
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import { WalletRecord } from "./useGetWalletCreated";
 import {
@@ -12,13 +11,14 @@ import {
   getRandomFieldFromServer,
   TRANSFER_MANAGER_PROGRAM_ID,
 } from "./utils";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export function useCreateTransaction({
   feePrivate = true,
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestTransaction, transactionStatus } = useWallet();
+  let { publicKey, requestTransaction, transactionStatus } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
   let [txId, setTxId] = useState<string | null>(null);

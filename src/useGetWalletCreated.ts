@@ -1,4 +1,3 @@
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import {
   BaseRecord,
@@ -7,6 +6,7 @@ import {
   WALLET_MANAGER_PROGRAM_ID,
 } from "./utils";
 import { WalletAdapterNetwork } from "@demox-labs/aleo-wallet-adapter-base";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export interface WalletRecordData {
   wallet_address: string;
@@ -20,7 +20,7 @@ export interface WalletRecord extends BaseRecord {
 }
 
 export function useGetWalletCreated() {
-  let { publicKey, requestRecords } = useWallet();
+  let { publicKey, requestRecords } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
 

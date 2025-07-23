@@ -10,3 +10,4 @@ export * from "./useCreateChangeGovernance";
 export * from "./useConfirmChangeGovernanceTicket";
 export * from "./useExecuteChangeGovernanceTicket";
 export * from "./useCreateChangeRole";
+export * from "./context/ZeroSecureContext";

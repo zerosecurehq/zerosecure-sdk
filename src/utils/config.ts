@@ -2,10 +2,9 @@ export const ZEROSECURE_BACKEND_URL = "http://localhost:3000";
 export const RPC_SERVER_TESTNET_BETA = "https://testnetbeta.aleorpc.com";
 export const RPC_SERVER_MAINNET_BETA = "https://mainnet.aleorpc.com";
 
-export const WALLET_MANAGER_PROGRAM_ID = "zerosecure_wallet_manager_v5.aleo";
-export const TRANSFER_MANAGER_PROGRAM_ID = "zerosecure_transfer_managerv5.aleo";
-export const GOVERNANCE_MANAGER_PROGRAM_ID =
-  "zerosecure_governance_managerv5.aleo";
+export const WALLET_MANAGER_PROGRAM_ID = "zero_wallet_manager_v7.aleo";
+export const TRANSFER_MANAGER_PROGRAM_ID = "zero_transfer_manager_v7.aleo";
+export const GOVERNANCE_MANAGER_PROGRAM_ID = "zero_governance_manager_v7.aleo";
 
 export const ALL_PROGRAM_IDS = [
   WALLET_MANAGER_PROGRAM_ID,
@@ -22,7 +21,9 @@ export const ZERO_ADDRESS =
 export const ZERO_ADDRESS_HASHED_TO_FIELD =
   "7833185298839889869212594806745334335817950658667461917749505843801426271110field";
 
-export const BASE_FEE = {
+// Todo: Use real fee to save transaction costs
+const ADDITIONAL_FEE = 100_000; // Base fee for all transactions
+const BASE_FEE = {
   ////// Wallet Manager Fees //////
   create_wallet: 90_000,
   change_admin: 22_000,
@@ -41,3 +42,9 @@ export const BASE_FEE = {
   confirm_change_governance: 22_000,
   execute_change_governance: 102_000,
 };
+
+for (const key in BASE_FEE) {
+  BASE_FEE[key] += ADDITIONAL_FEE;
+}
+
+export { BASE_FEE };

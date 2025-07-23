@@ -2,7 +2,6 @@ import {
   Transaction,
   WalletAdapterNetwork,
 } from "@demox-labs/aleo-wallet-adapter-base";
-import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { useState } from "react";
 import {
   BASE_FEE,
@@ -15,6 +14,7 @@ import {
   TRANSFER_MANAGER_PROGRAM_ID,
   removeVisibleModifier,
 } from "./utils";
+import { useZeroWallet } from "./context/ZeroSecureContext";
 
 export interface ExecuteTicketData {
   wallet_address: string;
@@ -33,7 +33,7 @@ export interface ExecuteTicketRecord extends BaseRecord {
 export function useGetExecuteTicket({
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestRecords } = useWallet();
+  let { publicKey, requestRecords } = useZeroWallet();
   let [error, setError] = useState<Error | null>(null);
   let [isProcessing, setIsProcessing] = useState(false);
 
@@ -84,7 +84,7 @@ export function useApplyExecuteTicket({
   waitToBeConfirmed = true,
   network = WalletAdapterNetwork.TestnetBeta,
 }: TransactionOptions = {}) {
-  let { publicKey, requestTransaction, transactionStatus } = useWallet();
+  let { publicKey, requestTransaction, transactionStatus } = useZeroWallet();
   let [isProcessing, setIsProcessing] = useState(false);
   let [error, setError] = useState<Error | null>(null);
   let [txId, setTxId] = useState<string | null>(null);
