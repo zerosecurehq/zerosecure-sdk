@@ -14,8 +14,11 @@ import {
 import { ConfirmChangeGovernanceTicketRecord } from "../useConfirmChangeGovernanceTicket";
 import { ExecuteChangeGovernanceTicketRecord } from "../useExecuteChangeGovernanceTicket";
 import { WalletRecord } from "../useGetWalletCreated";
-import { calcEncryptionKeyFromWalletRecord } from "./crypto";
-import { TokenMetadata } from "./types";
+import {
+  calcEncryptionKeyFromWalletRecord,
+  encryptExecuteTransaction,
+} from "./crypto";
+import { RawTransferRecord, SaveTransferRecord, TokenMetadata } from "./types";
 import { bigIntToString } from "./contract";
 
 export function removeVisibleModifier(value: string) {
@@ -447,4 +450,79 @@ export async function getTokenMetadata(
   localStorage.setItem("tokenMetadata", JSON.stringify(tokenMetadataCache));
 
   return tokenMetadata as TokenMetadata;
+}
+
+
+export async function saveTransfer(
+  record: SaveTransferRecord,
+  walletRecord: WalletRecord,
+  publicKey: string,
+  isInitiator: boolean = false,
+  network: WalletAdapterNetwork = WalletAdapterNetwork.TestnetBeta
+) {
+  try {
+    const response = await fetch(`${ZEROSECURE_BACKEND_URL}/${network}/transactions/saveTransfer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...record,
+        publicKey,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(`Failed to save transfer: ${error}`);
+  }
+}
+
+export async function getTransfers(
+  publicKey: string,
+  network: WalletAdapterNetwork = WalletAdapterNetwork.TestnetBeta
+): Promise<RawTransferRecord[]> {
+  try {
+    const response = await fetch(
+      `${ZEROSECURE_BACKEND_URL}/${network}/transactions/getTransfers?publicKey=${publicKey}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(`Failed to fetch transfers: ${error}`);
+  }
+}
+
+export async function updateTransferStatus(
+  transferId: string,
+  status: "pending" | "finalized" | "failed",
+  publicKey: string,
+  network: WalletAdapterNetwork = WalletAdapterNetwork.TestnetBeta
+): Promise<void> {
+  try {
+    const response = await fetch(`${ZEROSECURE_BACKEND_URL}/${network}/transactions/updateTransferStatus`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        transferId,
+        status,
+        publicKey,
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Transfer not found");
+      }
+      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Failed to update transfer status: ${error}`);
+  }
 }

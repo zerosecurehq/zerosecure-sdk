@@ -21,3 +21,28 @@ export interface TokenMetadata {
   name: string;
   symbol: string;
 }
+
+export interface RawTransferRecord {
+  from: string;
+  encryptedData: string;
+  timestamp: number;
+  status: "pending" | "finalized" | "failed";
+  transferId: string;
+}
+
+export interface SaveTransferRecord {
+  from: string;
+  timestamp: number;
+  status: "pending" | "finalized" | "failed";
+  transferId: string;
+  encryptedData?: string;
+}
+
+export interface TransferHistoryRecord {
+  from: string;
+  to: string;
+  amount: string;
+  timestamp: number;
+  status: "pending" | "finalized" | "failed";
+  transferId: string;
+}
