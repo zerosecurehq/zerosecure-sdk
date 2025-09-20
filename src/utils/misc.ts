@@ -498,31 +498,3 @@ export async function getTransfers(
     throw new Error(`Failed to fetch transfers: ${error}`);
   }
 }
-
-export async function updateTransferStatus(
-  transferId: string,
-  status: "pending" | "finalized" | "failed",
-  publicKey: string,
-  network: WalletAdapterNetwork = WalletAdapterNetwork.TestnetBeta
-): Promise<void> {
-  try {
-    const response = await fetch(`${ZEROSECURE_BACKEND_URL}/${network}/transactions/updateTransferStatus`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        transferId,
-        status,
-        publicKey,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error("Transfer not found");
-      }
-      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-    }
-  } catch (error) {
-    throw new Error(`Failed to update transfer status: ${error}`);
-  }
-}
