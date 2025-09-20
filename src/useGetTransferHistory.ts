@@ -14,7 +14,7 @@ interface TransactionOptions {
   walletRecord?: WalletRecord;
 }
 
-export function useTransferHistory({
+export function useGetTransferHistory({
   network = WalletAdapterNetwork.TestnetBeta,
   walletRecord,
 }: TransactionOptions = {}) {
@@ -66,12 +66,6 @@ export function useTransferHistory({
       setError(error as Error);
     }
   };
-
-  useEffect(() => {
-    if (publicKey && walletRecord) {
-      fetchTransferHistory();
-    }
-  }, [publicKey, walletRecord]);
 
   return {
     history,
